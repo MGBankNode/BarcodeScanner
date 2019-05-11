@@ -15,8 +15,7 @@ public class Point_CustomDialog extends Dialog{
     private Context context;
 
     //해쉬맵으로 바코드 번호-> 사용자 이름, 포인트 받아오기    //DB필요 : 사용자 이름, 바코드 번호, 적립 포인트
-    String userName = "남광우";
-    int myPoint=123;
+    private String myPoint = "";
 
     public interface ICustomDialogEventListener{
         void customDialogEvent(int finish_flag);
@@ -54,23 +53,41 @@ public class Point_CustomDialog extends Dialog{
         // 커스텀 다이얼로그의 각 위젯들을 정의한다.
         final Button okButton = (Button) dlg.findViewById(R.id.okButton);
         final Button saveButton = (Button) dlg.findViewById(R.id.saveButton);
-        final TextView user_name = (TextView) dlg.findViewById(R.id.user_name);
-        final TextView barcode_num = (TextView) dlg.findViewById(R.id.barcode_num);
-        final TextView my_point = (TextView) dlg.findViewById(R.id.my_point);
+        final TextView user_name = dlg.findViewById(R.id.user_name);
+        final TextView barcode_num = dlg.findViewById(R.id.barcode_num);
+        final TextView my_point = dlg.findViewById(R.id.my_point);
 
-        //정보 불러오기
-        barcode_num.setText(barcode);
-        user_name.setText(userName);
-        my_point.setText(myPoint+"p");
+        final BarcodeInfo barcodeInfo = new BarcodeInfo(barcode, getContext());
+        barcodeInfo.BarcodeInfoRequestHandler(new BarcodeInfo.VolleyCallback() {
+            @Override
+            public void onSuccess(String userName, String curPoint) {
+                //정보 불러오기
+                barcode_num.setText(barcode);
+                user_name.setText(userName);
+
+                myPoint = curPoint;
+                String pointText = myPoint + "p";
+                my_point.setText(myPoint);
+            }
+        });
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // '적립' 버튼 클릭시
                 onCustomDialogEventListener.customDialogEvent(1);
-                myPoint+=100;
-                my_point.setText(myPoint+"p");
+                String addPoint = "100";
+
                 //포인트 적립 후 서버로 값 전달 코드 필요-> 업데이트
+                barcodeInfo.AddBarcodeRequestHandler(addPoint, new BarcodeInfo.VolleyCallback() {
+                    @Override
+                    public void onSuccess(String userName, String curPoint) {
+                        //정보 불러오기
+                        String pointText = curPoint + "p";
+                        my_point.setText(pointText);
+                        myPoint = curPoint;
+                    }
+                });
 
             }
         });
@@ -84,5 +101,7 @@ public class Point_CustomDialog extends Dialog{
                 dlg.dismiss();
             }
         });
+
+
     }
 }
